@@ -2,7 +2,7 @@
     "id": "dx3rd-HUD",
     "title": "Double Cross 3rd HUD",
     "description": "A utility module for Double Cross system that implements functions such as running rolls, calling items, etc without opening a character sheet.",
-    "version": "This is auto replaced",
+    "version": "0.1.0",
     "compatibility": {
         "minimum": 11.315,
         "verified": "11.315"
