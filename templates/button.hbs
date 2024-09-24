@@ -1,0 +1,15 @@
+<div id="dx3rd-HUD">
+    {{#each buttons}}
+    <div class="dx3-button-wrapper" data-key="{{this.key}}">
+        <button class="dx3-button">{{this.name}}</button>
+        
+        {{#if subButtons}}
+        <div class="sub-buttons">
+            {{#each subButtons}}
+            <button class="dx3-sub-button" data-key="{{this.key}}">{{this.name}}</button>
+            {{/each}}
+        </div>
+        {{/if}}
+    </div>
+    {{/each}}
+</div>

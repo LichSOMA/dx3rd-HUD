@@ -1,14 +1,14 @@
 class DX3HUD extends Application {
     constructor() {
         super();
-        this.currentOpenedButton = null;  // 현재 열려 있는 base-button 추적
+        this.currentOpenedButton = null;  // Track the currently open base-button
     }
 
     static get defaultOptions() {
         return {
             ...super.defaultOptions,
             id: "dx3-HUD",
-            template: "modules/dx3rd-HUD/templates/button.hbs",  // 템플릿 경로 설정
+            template: "modules/dx3rd-HUD/templates/button.hbs",  // Set the template path
             resizable: false,
             width: 200,
             height: 'auto',
@@ -19,35 +19,35 @@ class DX3HUD extends Application {
     activateListeners(html) {
         super.activateListeners(html);
 
-        // Base 버튼 클릭 시 서브 버튼 표시/숨기기
+        // Show/hide sub buttons when Base button is clicked
         html.on("click", ".dx3-button-wrapper", (event) => {
             console.log("Base button clicked:", event.currentTarget);
             const buttonWrapper = event.currentTarget;
             const subButtonGroup = buttonWrapper.querySelector('.sub-buttons');
 
-            // 기존에 열린 서브 버튼 닫기
+            // Close an existing open sub button
             if (this.currentOpenedButton && this.currentOpenedButton !== buttonWrapper) {
                 const previousSubButtons = this.currentOpenedButton.querySelector('.sub-buttons');
                 if (previousSubButtons) previousSubButtons.style.display = 'none';
             }
 
-            // 클릭된 버튼의 서브 버튼 열기/닫기
+            // Open/Close subbuttons of a clicked button
             if (subButtonGroup) {
                 const isOpen = subButtonGroup.style.display === 'flex';
                 subButtonGroup.style.display = isOpen ? 'none' : 'flex';
-                this.currentOpenedButton = isOpen ? null : buttonWrapper;  // 열리면 저장, 닫히면 초기화
+                this.currentOpenedButton = isOpen ? null : buttonWrapper;
             }
         });
 
-        // 각 베이스 버튼에 따라 다른 서브 버튼 기능을 수행
+        // run function
         html.on("click", ".dx3-sub-button", async (event) => {
-            const subButtonKey = event.currentTarget.getAttribute('data-key');  // 서브 버튼의 data-key 가져오기
-            const baseButtonKey = this.currentOpenedButton?.querySelector('.dx3-button')?.getAttribute('data-key');  // 베이스 버튼의 data-key 가져오기
+            const baseButtonKey = this.currentOpenedButton?.getAttribute('data-key');  // Get the data-key for the base button
+            const subButtonKey = event.currentTarget.getAttribute('data-key');  // Get the data-key of a sub-button
 
             console.log("Sub button clicked:", subButtonKey);
             console.log("Base button key:", baseButtonKey);
 
-            // Roll 버튼의 서브 버튼 기능 처리
+            // Execute roll button's sub-button function
             if (baseButtonKey === "roll") {
                 const rollAttributeMap = {
                     "body": "body",
@@ -61,36 +61,71 @@ class DX3HUD extends Application {
                     await this.executeRoll(selectedAttribute);
                 }
             }
-            
-            // Combo 버튼의 서브 버튼 기능 처리
+
+            // Execute combo button's sub-button function
             else if (baseButtonKey === "combo") {
-                const comboFunctionMap = {
-                    "setup": () => console.log("Setup 기능 실행"),
-                    "initiative": () => console.log("Initiative 기능 실행"),
-                    "minor": () => console.log("Minor 기능 실행"),
-                    "major": () => console.log("Major 기능 실행"),
-                    "reaction": () => console.log("Reaction 기능 실행"),
-                    "auto": () => console.log("Auto 기능 실행"),
-                    "cleanup": () => console.log("Cleanup 기능 실행"),
-                    "always": () => console.log("Always 기능 실행"),
-                    "extradata": () => console.log("ExtraData 기능 실행")
-                };
-                const selectedComboFunction = comboFunctionMap[subButtonKey];
-                if (selectedComboFunction) {
-                    console.log("Executing Combo function for:", subButtonKey);
-                    selectedComboFunction();
+                const timing = subButtonKey;
+                let selectedTokens = canvas.tokens.controlled;
+                if (selectedTokens.length !== 1) {
+                    ui.notifications.info("select a token");
+                    return;
                 }
+
+                let token = selectedTokens[0];
+                let agent = token.actor;
+
+                await this.excuteComboAndEffect(agent, timing, "combo");
             }
 
-            // 다른 베이스 버튼의 서브 버튼 기능 처리
+            // Execute effect button's sub-button function
+            else if (baseButtonKey === "effect") {
+                const timing = subButtonKey;
+                let selectedTokens = canvas.tokens.controlled;
+                if (selectedTokens.length !== 1) {
+                    ui.notifications.info("select a token");
+                    return;
+                }
+
+                let token = selectedTokens[0];
+                let agent = token.actor;
+
+                await this.excuteComboAndEffect(agent, timing, "effect");
+            }
+
+            // Execute psionics button's sub-button function
+            else if (baseButtonKey === "psionics") {
+                const timing = subButtonKey;
+                let selectedTokens = canvas.tokens.controlled;
+                if (selectedTokens.length !== 1) {
+                    ui.notifications.info("select a token");
+                    return;
+                }
+
+                let token = selectedTokens[0];
+                let agent = token.actor;
+
+                await this.executePsionics(agent, timing);
+            }
+
+            // Execute spell button's sub-button function
+            else if (baseButtonKey === "spell") {
+            }
+
+            // Execute item button's sub-button function
+            else if (baseButtonKey === "item") {
+            }
+
+            // Execute rois button's sub-button function
+            else if (baseButtonKey === "rois") {
+            }
+
+            // Execute backtrack button's sub-button function
             else {
-                console.log(`${baseButtonKey}의 서브 버튼 기능 실행`);
-                // 다른 베이스 버튼의 서브 버튼에 대한 기능 추가 가능
             }
         });
     }
 
-    // 공통적인 롤 기능을 함수로 분리
+    // roll function
     async executeRoll(attribute) {
         const selectedTokens = canvas.tokens.controlled;
 
@@ -109,13 +144,13 @@ class DX3HUD extends Application {
         let base = Object.entries(skills).filter(([key, skill]) => skill.base === attribute);
 
         // Configuring dialog options
-        let options = `<button class="attribute-btn" data-attribute="${attribute}">${game.i18n.localize(`DX3rd.${attribute.charAt(0).toUpperCase() + attribute.slice(1)}`)}</button><br/>`;
+        let options = `<button class="attribute-btn ability" data-attribute="${attribute}">${game.i18n.localize(`DX3rd.${attribute.charAt(0).toUpperCase() + attribute.slice(1)}`)}</button><br/>`;
         options += `<hr>`;
         for (let [key, skill] of base) {
-            const skillName = skill.name.startsWith("DX3rd.") 
+            const skillName = skill.name.startsWith("DX3rd.")
                 ? game.i18n.localize(skill.name)
                 : skill.name;
-            options += `<button class="skill-btn" data-skill="${key}">${skillName}</button><br/>`;
+            options += `<button class="skill-btn skill" data-skill="${key}">${skillName}</button><br/>`;
         }
 
         // Generating Dialog HTML
@@ -131,42 +166,253 @@ class DX3HUD extends Application {
             content: content,
             buttons: {},
             render: (html) => {
-                // Run roll on skill button clicks
+                // Skill button click triggers _onRollSkill
                 html.find('.skill-btn').click(async (event) => {
-                    const selectedSkillKey = $(event.currentTarget).data('skill');
-                    const selectedSkill = skills[selectedSkillKey];
-                    const title = selectedSkill.name.startsWith("DX3rd.") 
-                        ? game.i18n.localize(selectedSkill.name)
-                        : selectedSkill.name;
-
-                    const diceOptions = {
-                        base: selectedSkill.base,
-                        skill: selectedSkillKey
+                    // closest() 메서드를 적용할 수 있는 구조를 생성
+                    const li = document.createElement('li');
+                    li.classList.add('skill');
+                    li.dataset.skillId = $(event.currentTarget).data('skill');
+                    const fakeEvent = {
+                        currentTarget: li,
+                        preventDefault: () => { }
                     };
-
-                    await actor.rollDice(title, diceOptions, false);
+                    await actor.sheet._onRollSkill(fakeEvent);
 
                     // close dialog
                     testDialog.close();
                 });
 
-                // Run roll on attribute button clicks
+                // Attribute button click triggers _onRollAbility
                 html.find('.attribute-btn').click(async (event) => {
-                    const selectedAttributeKey = $(event.currentTarget).data('attribute');
-                    const title = game.i18n.localize(`DX3rd.${selectedAttributeKey.charAt(0).toUpperCase() + selectedAttributeKey.slice(1)}`);
-
-                    const diceOptions = {
-                        base: selectedAttributeKey,
-                        skill: null
+                    // closest() 메서드를 적용할 수 있는 구조를 생성
+                    const li = document.createElement('li');
+                    li.classList.add('ability');
+                    li.dataset.abilityId = $(event.currentTarget).data('attribute');
+                    const fakeEvent = {
+                        currentTarget: li,
+                        preventDefault: () => { }
                     };
-
-                    await actor.rollDice(title, diceOptions, false);
+                    await actor.sheet._onRollAbility(fakeEvent);
 
                     // close dialog
                     testDialog.close();
                 });
             }
         }).render(true);
+    }
+
+    // excute combo dialog or effect dialog
+    async excuteComboAndEffect(agent, timing, itemType) {
+        let currentEP = Number(agent.system.attributes.encroachment.value);
+        let targets = Array.from(game.user.targets || []);
+
+        function parseDiceValue(value) {
+            if (!value) return 0;
+
+            // Treat 'd10' or 'D10' as 10
+            const dicePattern = /(\d+)[dD]10/g;
+            let totalValue = 0;
+
+            // Process the dice part first and the rest separately
+            let diceValue = value.replace(dicePattern, (match, diceCount) => {
+                return diceCount * 10;
+            });
+
+            // Calculate the remaining digits with eval() (e.g., handle the +5 in '1d10+5')
+            totalValue = eval(diceValue);
+
+            return totalValue;
+        }
+
+        // Function for filtering items based on timing and item type(combo & effect)
+        function getFilteredItems(agent, timing, currentEP, targets, itemType) {
+            return agent.items
+                .filter((item) => {
+                    let limit = item.system.limit;
+                    limit = Number(limit);
+                    if (isNaN(limit)) {
+                        limit = 0;
+                    }
+                    const matchesTiming = item.system.timing === timing || item.system.timing === "major-reaction" && (timing === "major" || timing === "reaction");
+                    const matchesType = itemType === "combo" ? item.data.type === "combo" : (item.data.type === "effect" || item.data.type === "easy");
+
+                    if (targets.length > 0) {
+                        return matchesTiming && matchesType && limit <= currentEP && item.system.getTarget;
+                    } else {
+                        return matchesTiming && matchesType && limit <= currentEP && !item.system.getTarget;
+                    }
+                })
+                .sort((a, b) => {
+                    // Step 1: Sort by limit (lower limit first)
+                    let limitA = Number(a.system.limit);
+                    let limitB = Number(b.system.limit);
+                    if (isNaN(limitA) || limitA === 0) limitA = -Infinity;
+                    if (isNaN(limitB) || limitB === 0) limitB = -Infinity;
+                    if (limitA !== limitB) return limitA - limitB;
+
+                    // Step 2: Sort by encroach value
+                    let encroachA = parseDiceValue(a.system.encroach.value);
+                    let encroachB = parseDiceValue(b.system.encroach.value);
+                    return encroachA - encroachB;
+                });
+        }
+
+        // Generate dialog content
+        let filteredItems = getFilteredItems(agent, timing, currentEP, targets, itemType);
+
+        function createDialogContent(filteredItems) {
+            let content = "";
+            filteredItems.forEach((item) => {
+                let limit = Number(item.system.limit);
+                let encroach = item.system.encroach.value;
+                if (isNaN(limit)) limit = 0;
+
+                let itemName = item.name;
+                let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
+                let limitText = limit !== 0 ? ` (${limit}%)` : "";
+                content += `<button class="macro-button" data-item-id="${item.id}">${itemName}${encroachText}${limitText}</button>`;
+            });
+            return content;
+        }
+
+        let dialogContent = createDialogContent(filteredItems);
+        if (!dialogContent) {
+            let message = targets.length > 0 ? "There are no items with the selected timing and target." : "There are no items with the selected timing.";
+            ui.notifications.info(message);
+            return;
+        }
+
+        let reactivateButton = `<hr><button class="macro-button" id="reactivate-button">${game.i18n.localize("DX3HUD.Recall")}</button>`;
+
+        let callDialog = new Dialog({
+            title: game.i18n.localize(`DX3rd.${timing.charAt(0).toUpperCase() + timing.slice(1)}`),
+            content: dialogContent + reactivateButton,
+            buttons: {},
+            close: () => { },
+            render: (html) => {
+                html.find(".macro-button").click((ev) => {
+                    let itemId = ev.currentTarget.dataset.itemId;
+                    let item = agent.items.get(itemId);
+                    if (ev.currentTarget.id === "reactivate-button") {
+                        callDialog.close();
+                        excuteComboAndEffect(agent, timing, itemType);  // Reopen the dialog
+                    } else {
+                        if (item) {
+                            item.toMessage();
+                            callDialog.close();
+                        }
+                    }
+                });
+            }
+        });
+        callDialog.render(true);
+    }
+
+    // excute psionic dialog
+    async executePsionics(agent, timing) {
+        let currentEP = Number(agent.system.attributes.encroachment.value);
+        let targets = Array.from(game.user.targets || []);
+
+        function parseDiceValue(value) {
+            if (!value) return 0;
+
+            // Treat 'd10' or 'D10' as 10
+            const dicePattern = /(\d+)[dD]10/g;
+            let totalValue = 0;
+
+            // Process the dice part first and the rest separately
+            let diceValue = value.replace(dicePattern, (match, diceCount) => {
+                return diceCount * 10;
+            });
+
+            // Calculate the remaining digits with eval() (e.g., handle the +5 in '1d10+5')
+            totalValue = eval(diceValue);
+
+            return totalValue;
+        }
+
+        // Function for filtering items based on timing and item type(psionics)
+        function getFilteredPsionicsItems(agent, timing, currentEP, targets) {
+            return agent.items
+                .filter((item) => {
+                    let limit = item.system.limit;
+                    limit = Number(limit);
+                    if (isNaN(limit)) {
+                        limit = 0;
+                    }
+                    const matchesTiming = item.system.timing === timing || item.system.timing === "major-reaction" && (timing === "major" || timing === "reaction");
+                    const isPsionics = item.data.type === "psionic";
+
+                    if (targets.length > 0) {
+                        return matchesTiming && isPsionics && limit <= currentEP && item.system.getTarget;
+                    } else {
+                        return matchesTiming && isPsionics && limit <= currentEP && !item.system.getTarget;
+                    }
+                })
+                .sort((a, b) => {
+                    // Step 1: Sort by limit (lower limit first)
+                    let limitA = Number(a.system.limit);
+                    let limitB = Number(b.system.limit);
+                    if (isNaN(limitA) || limitA === 0) limitA = -Infinity;
+                    if (isNaN(limitB) || limitB === 0) limitB = -Infinity;
+                    if (limitA !== limitB) return limitA - limitB;
+
+                    // Step 2: Sort by hp value
+                    let hpA = parseDiceValue(a.system.hp.value);
+                    let hpB = parseDiceValue(b.system.hp.value);
+                    return hpA - hpB;
+                });
+        }
+
+        // Generate dialog content for psionics
+        let filteredItems = getFilteredPsionicsItems(agent, timing, currentEP, targets);
+
+        function createDialogContent(filteredItems) {
+            let content = "";
+            filteredItems.forEach((item) => {
+                let limit = Number(item.system.limit);
+                let hp = item.system.hp.value;
+                if (isNaN(limit)) limit = 0;
+
+                let itemName = item.name;
+                let hpText = hp ? ` (${game.i18n.localize("DX3rd.HP")}: ${hp})` : "";
+                let limitText = limit !== 0 ? ` (${limit}%)` : "";
+                content += `<button class="macro-button" data-item-id="${item.id}">${itemName}${hpText}${limitText}</button>`;
+            });
+            return content;
+        }
+
+        let dialogContent = createDialogContent(filteredItems);
+        if (!dialogContent) {
+            let message = targets.length > 0 ? "There are no psionics items with the selected timing and target." : "There are no psionics items with the selected timing.";
+            ui.notifications.info(message);
+            return;
+        }
+
+        let reactivateButton = `<hr><button class="macro-button" id="reactivate-button">${game.i18n.localize("DX3HUD.Recall")}</button>`;
+
+        let callDialog = new Dialog({
+            title: game.i18n.localize(`DX3rd.${timing.charAt(0).toUpperCase() + timing.slice(1)}`),
+            content: dialogContent + reactivateButton,
+            buttons: {},
+            close: () => { },
+            render: (html) => {
+                html.find(".macro-button").click((ev) => {
+                    let itemId = ev.currentTarget.dataset.itemId;
+                    let item = agent.items.get(itemId);
+                    if (ev.currentTarget.id === "reactivate-button") {
+                        callDialog.close();
+                        executePsionics(agent, timing);  // Reopen the dialog
+                    } else {
+                        if (item) {
+                            item.toMessage();
+                            callDialog.close();
+                        }
+                    }
+                });
+            }
+        });
+        callDialog.render(true);
     }
 
     getData() {
@@ -259,12 +505,14 @@ class DX3HUD extends Application {
                         { name: `${game.i18n.localize("DX3rd.Memory")}`, key: "memory" }
                     ]
                 },
-                { name: `${game.i18n.localize("DX3rd.BackTrack")}`, key: "backtrack" } // 이 버튼은 서브 버튼이 없음
+                { name: `${game.i18n.localize("DX3rd.BackTrack")}`, key: "backtrack" } // This button has no subbuttons
             ]
+
         }
     }
+
     setPosition() {
-        this.element[0].style.left = "100px";
-        this.element[0].style.top = "100px";
+        this.element[0].style.left = "60px";
+        this.element[0].style.top = "80px";
     }
 }

@@ -38,10 +38,10 @@
 
 .sub-buttons {
     position: absolute;
-    left: 85px; /* base-button의 오른쪽에 서브 버튼 표시 */
-    top: 10px;
+    left: 85px;
+    top: 4px;
     display: none;
-    flex-direction: row; /* 서브 버튼을 수평으로 나열 */
+    flex-direction: row;
 }
 
 .dx3-sub-button {
@@ -55,7 +55,7 @@
     justify-content: center;
     font-size: 12px;
     font-weight: bold;
-    margin-left: 5px; /* 버튼 간 간격을 위한 좌측 여백 */
+    margin-left: 5px;
     cursor: pointer;
     border-radius: 5px;
 }

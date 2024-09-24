@@ -1,15 +1,15 @@
-let dx3HUDInstance = null;  // 전역 변수로 인스턴스를 추적
+let dx3HUDInstance = null;
 
-Hooks.on("controlToken", (token, controlled) => {
+Hooks.once("controlToken", (token, controlled) => {
     const tokensControlled = canvas.tokens.controlled.length > 0;
 
-    // 토큰이 선택되면 UI를 렌더링하고 선택이 해제되면 UI를 닫음
+    // render the UI when the token is selected and close the UI when it is deselected
     if (tokensControlled && !dx3HUDInstance) {
         dx3HUDInstance = new DX3HUD();
-        dx3HUDInstance.token = token;  // 토큰 정보 저장
-        dx3HUDInstance.render(true);   // 버튼 UI 렌더링
+        dx3HUDInstance.token = token;
+        dx3HUDInstance.render(true);
     } else if (!tokensControlled && dx3HUDInstance) {
-        dx3HUDInstance.close();  // UI 닫기
-        dx3HUDInstance = null;   // 인스턴스 초기화
+        dx3HUDInstance.close();
+        dx3HUDInstance = null;
     }
 });
