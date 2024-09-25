@@ -127,11 +127,7 @@ class DX3HUD extends Application {
             }
         });
 
-<<<<<<< HEAD
         // Add a single event handler for both rois and backtrack buttons
-=======
-        // Add a event handler for both rois and backtrack buttons
->>>>>>> 10f4f1021a3f10c7da0e1b90f17825aee7713965
         html.on("click", ".dx3-button-wrapper[data-key='rois'], .dx3-button-wrapper[data-key='backtrack']", async (event) => {
             let selectedTokens = canvas.tokens.controlled;
             if (selectedTokens.length !== 1) {
@@ -145,25 +141,17 @@ class DX3HUD extends Application {
 
             if (baseButtonKey === 'rois') {
                 console.log("Executing rois functionality");
-<<<<<<< HEAD
-                // Implement rois-related functionality here
-                // await this.executeRois(agent);
+                
+                await this.executeRois(agent);
             } else if (baseButtonKey === 'backtrack') {
                 console.log("Executing backtrack functionality");
                 // Implement backtrack-related functionality here
-=======
-                // Implement rois-related function here
-                // await this.executeRois(agent);
-            } else if (baseButtonKey === 'backtrack') {
-                console.log("Executing backtrack functionality");
-                // Implement backtrack-related function here
->>>>>>> 10f4f1021a3f10c7da0e1b90f17825aee7713965
                 // await this.executeBacktrack(agent);
             }
         });
     }
 
-    // execute roll dialog
+    // roll function
     async executeRoll(attribute) {
         const selectedTokens = canvas.tokens.controlled;
 
@@ -326,7 +314,7 @@ class DX3HUD extends Application {
                     content += `<button class="macro-button" data-item-id="${item.id}">${itemName}${encroachText}${limitText}</button>`;
                 });
         
-                // Separator if there are easy items
+                // Separator
                 if (normalItems.length > 0 && easyItems.length > 0) {
                     content += `<hr>`;
                 }
@@ -514,13 +502,99 @@ class DX3HUD extends Application {
 
         let dialogContent = createDialogContent(filteredItems);
         if (!dialogContent) {
-            let message = targets.length > 0 ? "There are no items items with the selected type and target." : "There are no items items with the selected type.";
+            let message = "There are no items items with the selected type.";
             ui.notifications.info(message);
             return;
         }
 
         let callDialog = new Dialog({
             title: game.i18n.localize(`DX3rd.${type.charAt(0).toUpperCase() + type.slice(1)}`),
+            content: dialogContent,
+            buttons: {},
+            close: () => { },
+            render: (html) => {
+                html.find(".macro-button").click((ev) => {
+                    let itemId = ev.currentTarget.dataset.itemId;
+                    let item = agent.items.get(itemId);
+                    if (item) {
+                        item.toMessage();
+                        callDialog.close();
+                    }
+                });
+            }
+        });
+        callDialog.render(true);
+    }
+
+    // excute rois dialog
+    async executeRois(agent) {
+        // Function for filtering items based on item type(rois, memory)
+        function getFilteredItems(agent) {
+            return agent.items
+                .filter((item) => {
+                    const matchesType = item.data.type === "rois";
+
+                    return matchesType;
+                });
+        }
+
+        // Generate dialog content for items
+        let filteredItems = getFilteredItems(agent);
+
+        function createDialogContent(filteredItems) {
+            let content = "";
+            let descriptedItems = filteredItems.filter(item => item.system.type === "D");
+            let superierItems = filteredItems.filter(item => item.system.type === "S");
+            let justItems = filteredItems.filter(item => item.system.type === "-");
+            let memoryItems = filteredItems.filter(item => item.system.type === "M");
+
+            descriptedItems.forEach((item) => {
+                let itemName = item.name;
+                content += `<button class="macro-button" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Descripted")}: ${itemName}</button>`;
+            });
+
+            // Separator
+            if (descriptedItems.length > 0) {
+                content += `<hr>`;
+            }
+
+            superierItems.forEach((item) => {
+                let itemName = item.name;
+                content += `<button class="macro-button" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Superier")}: ${itemName}</button>`;
+            });
+
+            // Separator
+            if (superierItems.length > 0) {
+                content += `<hr>`;
+            }
+
+            justItems.forEach((item) => {
+                let itemName = item.name;
+                content += `<button class="macro-button" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Rois")}: ${itemName}</button>`;
+            });
+
+            // Separator
+            if (justItems.length > 0 && memoryItems.length > 0) {
+                content += `<hr>`;
+            }
+
+            // Easy items
+            memoryItems.forEach((item) => {
+                let itemName = item.name;
+                content += `<button class="macro-button" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Memory")}: ${itemName}</button>`;
+            });
+            return content;
+        }
+
+        let dialogContent = createDialogContent(filteredItems);
+        if (!dialogContent) {
+            let message = "There are no items items with the selected type.";
+            ui.notifications.info(message);
+            return;
+        }
+
+        let callDialog = new Dialog({
+            title: game.i18n.localize(`DX3rd.Rois`),
             content: dialogContent,
             buttons: {},
             close: () => { },
