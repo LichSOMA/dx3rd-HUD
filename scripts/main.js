@@ -19,6 +19,42 @@ class DX3HUD extends Application {
     activateListeners(html) {
         super.activateListeners(html);
 
+        // Checks each base button, hiding the sub buttons if they are empty, and hiding the base button as well if all sub buttons are empty.
+        html.find('.dx3-button-wrapper').each((index, element) => {
+            const baseButtonKey = $(element).attr('data-key');
+
+            // Exception handling: do not hide roll, rois, and backtrack buttons
+            if (baseButtonKey === "roll" || baseButtonKey === "rois" || baseButtonKey === "backtrack") {
+                $(element).show();
+                return;
+            }
+
+            const subButtons = $(element).find('.sub-buttons .dx3-sub-button');
+
+            let hasVisibleSubButtons = false;
+
+            subButtons.each((subIndex, subElement) => {
+                const subButtonKey = $(subElement).attr('data-key');
+
+                // Check the sub-button has a corresponding item
+                const itemsForSubButton = this.getItemsForSubButton(baseButtonKey, subButtonKey);
+
+                if (itemsForSubButton.length > 0) {
+                    $(subElement).show();
+                    hasVisibleSubButtons = true;
+                } else {
+                    $(subElement).hide();
+                }
+            });
+
+            // If all sub buttons are hidden, the base button is also hidden
+            if (!hasVisibleSubButtons) {
+                $(element).hide();
+            } else {
+                $(element).show();
+            }
+        });
+
         // Show/hide sub buttons when Base button is clicked
         html.on("click", ".dx3-button-wrapper", (event) => {
             console.log("Base button clicked:", event.currentTarget);
@@ -244,19 +280,19 @@ class DX3HUD extends Application {
         function parseDiceValue(value) {
             // Check if the value is undefined or null and return 0
             if (!value || typeof value !== "string") return 0;
-        
+
             // Treat 'd10' or 'D10' as 10
             const dicePattern = /(\d+)[dD]10/g;
             let totalValue = 0;
-        
+
             // Process the dice part first and the rest separately
             let diceValue = value.replace(dicePattern, (match, diceCount) => {
                 return diceCount * 10;
             });
-        
+
             // Calculate the remaining digits with eval() (e.g., handle the +5 in '1d10+5')
             totalValue = eval(diceValue);
-        
+
             return totalValue;
         }
 
@@ -525,22 +561,22 @@ class DX3HUD extends Application {
     // excute spell dialog
     async excuteSpells(agent, type) {
         let targets = Array.from(game.user.targets || []);
-    
+
         function parseDiceValue(value) {
             if (!value) return 0;
-    
+
             const dicePattern = /(\d+)[dD]10/g;
             let totalValue = 0;
-    
+
             let diceValue = value.replace(dicePattern, (match, diceCount) => {
                 return diceCount * 10;
             });
-    
+
             totalValue = eval(diceValue);
-    
+
             return totalValue;
         }
-    
+
         // Function for filtering items based on spelltype
         function getFilteredItems(agent, type, targets) {
             return agent.items
@@ -564,12 +600,12 @@ class DX3HUD extends Application {
                     return encroachA - encroachB;
                 });
         }
-    
+
         let filteredItems = getFilteredItems(agent, type, targets);
-    
+
         function createDialogContent(filteredItems) {
             let content = "";
-    
+
             // Create buttons for NormalSpell
             if (type === "NormalSpell") {
                 let normalSpellItems = filteredItems.filter(item => item.system.spelltype === "NormalSpell");
@@ -579,7 +615,7 @@ class DX3HUD extends Application {
                 normalSpellItems.forEach(item => {
                     let encroach = item.system.encroach.value;
                     let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-    
+
                     content += `<button class="spell-btn" data-item-id="${item.id}">${game.i18n.localize("DX3rd.NormalSpell")}: ${item.name}${encroachText}</button><br/>`;
                 });
 
@@ -591,11 +627,11 @@ class DX3HUD extends Application {
                 normalKeepItems.forEach(item => {
                     let encroach = item.system.encroach.value;
                     let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-    
+
                     content += `<button class="spell-btn" data-item-id="${item.id}">${game.i18n.localize("DX3rd.NormalKeep")}: ${item.name}${encroachText}</button><br/>`;
                 });
             }
-    
+
             // Create buttons for SignSpell
             else if (type === "SignSpell") {
                 let signSpellItems = filteredItems.filter(item => item.system.spelltype === "SignSpell");
@@ -603,11 +639,11 @@ class DX3HUD extends Application {
                 signSpellItems.forEach(item => {
                     let encroach = item.system.encroach.value;
                     let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-    
+
                     content += `<button class="spell-btn" data-item-id="${item.id}">${game.i18n.localize("DX3rd.SignSpell")}: ${item.name}${encroachText}</button><br/>`;
                 });
             }
-    
+
             // Create buttons for Summon
             else if (type === "Summon") {
                 let summonItems = filteredItems.filter(item => item.system.spelltype === "Summon");
@@ -616,7 +652,7 @@ class DX3HUD extends Application {
                 summonItems.forEach(item => {
                     let encroach = item.system.encroach.value;
                     let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-    
+
                     content += `<button class="spell-btn" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Summon")}: ${item.name}${encroachText}</button><br/>`;
                 });
 
@@ -628,7 +664,7 @@ class DX3HUD extends Application {
                 summonRitualItems.forEach(item => {
                     let encroach = item.system.encroach.value;
                     let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-    
+
                     content += `<button class="spell-btn" data-item-id="${item.id}">${game.i18n.localize("DX3rd.SummonRitual")}: ${item.name}${encroachText}</button><br/>`;
                 });
             }
@@ -641,7 +677,7 @@ class DX3HUD extends Application {
                 evocationItems.forEach(item => {
                     let encroach = item.system.encroach.value;
                     let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-    
+
                     content += `<button class="spell-btn" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Evocation")}: ${item.name}${encroachText}</button><br/>`;
                 });
 
@@ -653,11 +689,11 @@ class DX3HUD extends Application {
                 evocationRitualItems.forEach(item => {
                     let encroach = item.system.encroach.value;
                     let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-    
+
                     content += `<button class="spell-btn" data-item-id="${item.id}">${game.i18n.localize("DX3rd.EvocationRitual")}: ${item.name}${encroachText}</button><br/>`;
                 });
             }
-    
+
             // Create buttons for Ritual
             else {
                 let ritualItems = filteredItems.filter(item => item.system.spelltype === "Ritual");
@@ -669,7 +705,7 @@ class DX3HUD extends Application {
                 ritualItems.forEach(item => {
                     let encroach = item.system.encroach.value;
                     let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-    
+
                     content += `<button class="spell-btn" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Ritual")}: ${item.name}${encroachText}</button><br/>`;
                 });
 
@@ -705,7 +741,7 @@ class DX3HUD extends Application {
                 summonRitualItems.forEach(item => {
                     let encroach = item.system.encroach.value;
                     let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-    
+
                     content += `<button class="spell-btn" data-item-id="${item.id}">${game.i18n.localize("DX3rd.SummonRitual")}: ${item.name}${encroachText}</button><br/>`;
                 });
 
@@ -717,21 +753,21 @@ class DX3HUD extends Application {
                 evocationRitualItems.forEach(item => {
                     let encroach = item.system.encroach.value;
                     let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-    
+
                     content += `<button class="spell-btn" data-item-id="${item.id}">${game.i18n.localize("DX3rd.EvocationRitual")}: ${item.name}${encroachText}</button><br/>`;
                 });
             }
 
             return content;
         }
-    
+
         let dialogContent = createDialogContent(filteredItems);
-    
+
         if (!dialogContent) {
             ui.notifications.info("There are no items with the selected spell type.");
             return;
         }
-    
+
         let spellDialog = new Dialog({
             title: game.i18n.localize(`DX3rd.${type}`),
             content: dialogContent,
@@ -749,7 +785,7 @@ class DX3HUD extends Application {
         });
         spellDialog.render(true);
     }
-    
+
     // excute item dialog
     async excuteItems(agent, type) {
         // Function for filtering items based on item type(weapon, protect, vehicle, connection, book, etc, once)
@@ -1036,6 +1072,41 @@ class DX3HUD extends Application {
             ]
 
         }
+    }
+
+    // Function to get the item corresponding to the sub-button
+    getItemsForSubButton(baseButtonKey, subButtonKey) {
+        let selectedTokens = canvas.tokens.controlled;
+        if (selectedTokens.length !== 1) return [];
+
+        let token = selectedTokens[0];
+        let agent = token.actor;
+
+        if (baseButtonKey === "combo" || baseButtonKey === "effect" || baseButtonKey === "psionics") {
+            const timing = subButtonKey;
+            let items = agent.items.filter(item => item.system.timing === timing && item.data.type === baseButtonKey);
+            return items;
+        }
+
+        if (baseButtonKey === "spell") {
+            const spelltype = subButtonKey;
+            let items = agent.items.filter(item => item.system.spelltype === spelltype
+                || item.system.spelltype === "NormalKeep" && spelltype === "NormalSpell"
+                || item.system.spelltype === "RitualKeep" && spelltype === "Ritual"
+                || item.system.spelltype === "RitualCurse" && spelltype === "Ritual"
+                || item.system.spelltype === "SummonRitual" && (spelltype === "Summon" || spelltype === "Ritual")
+                || item.system.spelltype === "EvocationRitual" && (spelltype === "Evocation" || spelltype === "Ritual") && item.data.type === baseButtonKey);
+            return items;
+        }
+
+        if (baseButtonKey === "item") {
+            const type = subButtonKey;
+            let items = agent.items.filter(item => item.data.type === type ||
+                (["book", "etc", "once"].includes(type) && item.data.type === "item" && item.system.type === type));
+            return items;
+        }
+
+        return [];
     }
 
     setPosition() {

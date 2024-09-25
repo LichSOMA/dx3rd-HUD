@@ -2,14 +2,16 @@
     "id": "dx3rd-HUD",
     "title": "Double Cross 3rd HUD",
     "description": "A utility module for Double Cross system that implements functions such as running rolls, calling items, etc without opening a character sheet.",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "compatibility": {
-        "minimum": 11.315,
+        "minimum": 11,
         "verified": "11.315"
     },
     "authors": [
         {
-            "name": "LichSOMA"
+            "name": "LichSOMA",
+            "email": "bluedaypoprpg@gmail.com",
+            "discord": "bluedaypop"
         }
     ],
     "relationships": {
@@ -42,9 +44,19 @@
             "lang": "ko",
             "name": "Korean",
             "path": "lang/ko.json"
+        },
+        {
+            "lang": "ja",
+            "name": "日本語",
+            "path": "lang/ja.json"
+        },
+        {
+            "lang": "en",
+            "name": "English",
+            "path": "lang/en.json"
         }
     ],
-    "url": "",
+    "url": "https://github.com/LichSOMA/dx3rd-HUD",
     "manifest": "",
     "download": ""
 }
