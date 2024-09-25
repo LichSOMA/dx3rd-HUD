@@ -1,6 +1,6 @@
 let dx3HUDInstance = null;
 
-Hooks.once("controlToken", (token, controlled) => {
+Hooks.on("controlToken", (token, controlled) => {
     const tokensControlled = canvas.tokens.controlled.length > 0;
 
     // render the UI when the token is selected and close the UI when it is deselected
