@@ -22,23 +22,23 @@ class DX3HUD extends Application {
         // Checks each base button, hiding the sub buttons if they are empty, and hiding the base button as well if all sub buttons are empty.
         html.find('.dx3-button-wrapper').each((index, element) => {
             const baseButtonKey = $(element).attr('data-key');
-
+            
             // Exception handling: do not hide roll, rois, and backtrack buttons
             if (baseButtonKey === "roll" || baseButtonKey === "rois" || baseButtonKey === "backtrack") {
                 $(element).show();
                 return;
             }
-
+        
             const subButtons = $(element).find('.sub-buttons .dx3-sub-button');
-
+        
             let hasVisibleSubButtons = false;
-
+        
             subButtons.each((subIndex, subElement) => {
                 const subButtonKey = $(subElement).attr('data-key');
-
+        
                 // Check the sub-button has a corresponding item
                 const itemsForSubButton = this.getItemsForSubButton(baseButtonKey, subButtonKey);
-
+        
                 if (itemsForSubButton.length > 0) {
                     $(subElement).show();
                     hasVisibleSubButtons = true;
@@ -46,7 +46,7 @@ class DX3HUD extends Application {
                     $(subElement).hide();
                 }
             });
-
+        
             // If all sub buttons are hidden, the base button is also hidden
             if (!hasVisibleSubButtons) {
                 $(element).hide();
@@ -138,7 +138,7 @@ class DX3HUD extends Application {
             }
 
             // Execute psionics button's sub-button function
-            else if (baseButtonKey === "psionics") {
+            else if (baseButtonKey === "psionic") {
                 const timing = subButtonKey;
                 let selectedTokens = canvas.tokens.controlled;
                 if (selectedTokens.length !== 1) {
@@ -239,7 +239,6 @@ class DX3HUD extends Application {
             render: (html) => {
                 // Skill button click triggers _onRollSkill
                 html.find('.skill-btn').click(async (event) => {
-                    // closest() 메서드를 적용할 수 있는 구조를 생성
                     const li = document.createElement('li');
                     li.classList.add('skill');
                     li.dataset.skillId = $(event.currentTarget).data('skill');
@@ -255,7 +254,6 @@ class DX3HUD extends Application {
 
                 // Attribute button click triggers _onRollAbility
                 html.find('.attribute-btn').click(async (event) => {
-                    // closest() 메서드를 적용할 수 있는 구조를 생성
                     const li = document.createElement('li');
                     li.classList.add('ability');
                     li.dataset.abilityId = $(event.currentTarget).data('attribute');
@@ -1024,7 +1022,7 @@ class DX3HUD extends Application {
                 },
                 {
                     name: `${game.i18n.localize("DX3rd.Psionics")}`,
-                    key: "psionics",
+                    key: "psionic",
                     subButtons: [
                         { name: `${game.i18n.localize("DX3rd.Setup")}`, key: "setup" },
                         { name: `${game.i18n.localize("DX3rd.Initiative")}`, key: "initiative" },
@@ -1082,7 +1080,7 @@ class DX3HUD extends Application {
         let token = selectedTokens[0];
         let agent = token.actor;
 
-        if (baseButtonKey === "combo" || baseButtonKey === "effect" || baseButtonKey === "psionics") {
+        if (baseButtonKey === "combo" || baseButtonKey === "effect" || baseButtonKey === "psionic") {
             const timing = subButtonKey;
             let items = agent.items.filter(item => item.system.timing === timing && item.data.type === baseButtonKey);
             return items;
