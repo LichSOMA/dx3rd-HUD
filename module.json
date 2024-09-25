@@ -55,7 +55,7 @@
         }
     ],
     "url": "https://github.com/LichSOMA/dx3rd-HUD",
-    "manifest": "https://github.com/LichSOMA/dx3rd-HUD/releases/latest/download/module.json",
+    "manifest": "",
     "download": "https://codeload.github.com/LichSOMA/dx3rd-HUD/zip/main",
     "license": "LICENSE.txt"
 }
