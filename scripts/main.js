@@ -127,11 +127,7 @@ class DX3HUD extends Application {
             }
         });
 
-<<<<<<< HEAD
         // Add a single event handler for both rois and backtrack buttons
-=======
-        // Add a event handler for both rois and backtrack buttons
->>>>>>> 10f4f1021a3f10c7da0e1b90f17825aee7713965
         html.on("click", ".dx3-button-wrapper[data-key='rois'], .dx3-button-wrapper[data-key='backtrack']", async (event) => {
             let selectedTokens = canvas.tokens.controlled;
             if (selectedTokens.length !== 1) {
@@ -145,25 +141,17 @@ class DX3HUD extends Application {
 
             if (baseButtonKey === 'rois') {
                 console.log("Executing rois functionality");
-<<<<<<< HEAD
                 // Implement rois-related functionality here
                 // await this.executeRois(agent);
             } else if (baseButtonKey === 'backtrack') {
                 console.log("Executing backtrack functionality");
                 // Implement backtrack-related functionality here
-=======
-                // Implement rois-related function here
-                // await this.executeRois(agent);
-            } else if (baseButtonKey === 'backtrack') {
-                console.log("Executing backtrack functionality");
-                // Implement backtrack-related function here
->>>>>>> 10f4f1021a3f10c7da0e1b90f17825aee7713965
                 // await this.executeBacktrack(agent);
             }
         });
     }
 
-    // execute roll dialog
+    // roll function
     async executeRoll(attribute) {
         const selectedTokens = canvas.tokens.controlled;
 
@@ -326,7 +314,7 @@ class DX3HUD extends Application {
                     content += `<button class="macro-button" data-item-id="${item.id}">${itemName}${encroachText}${limitText}</button>`;
                 });
         
-                // Separator if there are easy items
+                // Separator
                 if (normalItems.length > 0 && easyItems.length > 0) {
                     content += `<hr>`;
                 }
