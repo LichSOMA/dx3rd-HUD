@@ -242,20 +242,21 @@ class DX3HUD extends Application {
         let targets = Array.from(game.user.targets || []);
 
         function parseDiceValue(value) {
-            if (!value) return 0;
-
+            // Check if the value is undefined or null and return 0
+            if (!value || typeof value !== "string") return 0;
+        
             // Treat 'd10' or 'D10' as 10
             const dicePattern = /(\d+)[dD]10/g;
             let totalValue = 0;
-
+        
             // Process the dice part first and the rest separately
             let diceValue = value.replace(dicePattern, (match, diceCount) => {
                 return diceCount * 10;
             });
-
+        
             // Calculate the remaining digits with eval() (e.g., handle the +5 in '1d10+5')
             totalValue = eval(diceValue);
-
+        
             return totalValue;
         }
 
@@ -263,11 +264,9 @@ class DX3HUD extends Application {
         function getFilteredItems(agent, timing, currentEP, targets, itemType) {
             return agent.items
                 .filter((item) => {
-                    let limit = item.system.limit;
-                    limit = Number(limit);
-                    if (isNaN(limit)) {
-                        limit = 0;
-                    }
+                    let limit = Number(item.system.limit);
+                    if (isNaN(limit)) limit = 0;
+
                     const matchesTiming = item.system.timing === timing || item.system.timing === "major-reaction" && (timing === "major" || timing === "reaction");
                     const matchesType = itemType === "combo" ? item.data.type === "combo" : item.data.type === "effect";
 
@@ -278,18 +277,36 @@ class DX3HUD extends Application {
                     }
                 })
                 .sort((a, b) => {
-                    // Step 1: Sort by limit (lower limit first)
                     let limitA = Number(a.system.limit);
                     let limitB = Number(b.system.limit);
                     if (isNaN(limitA) || limitA === 0) limitA = -Infinity;
                     if (isNaN(limitB) || limitB === 0) limitB = -Infinity;
                     if (limitA !== limitB) return limitA - limitB;
 
-                    // Step 2: Sort by encroach value
                     let encroachA = parseDiceValue(a.system.encroach.value);
                     let encroachB = parseDiceValue(b.system.encroach.value);
                     return encroachA - encroachB;
                 });
+        }
+
+        // Logic to check if the item is fully used (based on usedFull logic)
+        function isItemFullyUsed(used, level) {
+            let max = used.max + (used.level ? level : 0);
+            return (used.disable != 'notCheck' && used.state >= max);
+        }
+
+        // Logic to check if a combo is fully used (based on usedFullForCombo logic)
+        function isComboFullyUsed(agent, combo) {
+            const effectItems = combo.system.effect;
+            for (let e of effectItems) {
+                if (e == "-") continue;
+                let effect = agent.items.find(element => element._id == e);
+                let used = effect.system.used;
+                if (isItemFullyUsed(used, effect.system.level.value)) {
+                    return true; // Combo is fully used
+                }
+            }
+            return false; // Combo is not fully used
         }
 
         // Generate dialog content
@@ -297,49 +314,36 @@ class DX3HUD extends Application {
 
         function createDialogContent(filteredItems) {
             let content = "";
-            if (itemType === "combo") {
-                filteredItems.forEach((item) => {
-                    let limit = Number(item.system.limit);
-                    let encroach = item.system.encroach.value;
-                    if (isNaN(limit)) limit = 0;
 
-                    let itemName = item.name;
-                    let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-                    let limitText = limit !== 0 ? ` (${limit}%)` : "";
-                    content += `<button class="macro-button" data-item-id="${item.id}">${itemName}${encroachText}${limitText}</button>`;
-                });
-            } else {
-                let normalItems = filteredItems.filter(item => item.system.type === "normal");
-                let easyItems = filteredItems.filter(item => item.system.type === "easy");
+            filteredItems.forEach((item) => {
+                let limit = Number(item.system.limit);
+                if (isNaN(limit) || item.system.limit === "-") {
+                    limit = 0;
+                }
+                let encroach = item.system.encroach.value;
 
-                normalItems.forEach((item) => {
-                    let limit = Number(item.system.limit);
-                    let encroach = item.system.encroach.value;
-                    if (isNaN(limit)) limit = 0;
+                let isDisabled = false;
+                let style = "";
 
-                    let itemName = item.name;
-                    let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-                    let limitText = limit !== 0 ? ` (${limit}%)` : "";
-                    content += `<button class="macro-button" data-item-id="${item.id}">${itemName}${encroachText}${limitText}</button>`;
-                });
-
-                // Separator
-                if (normalItems.length > 0 && easyItems.length > 0) {
-                    content += `<hr>`;
+                // Apply usedFull logic for effect items
+                if (item.data.type === "effect" && isItemFullyUsed(item.system.used, item.system.level.value)) {
+                    isDisabled = true;
                 }
 
-                // Easy items
-                easyItems.forEach((item) => {
-                    let limit = Number(item.system.limit);
-                    let encroach = item.system.encroach.value;
-                    if (isNaN(limit)) limit = 0;
+                // Apply usedFullForCombo logic for combo items
+                if (item.data.type === "combo" && isComboFullyUsed(agent, item)) {
+                    isDisabled = true;
+                }
 
-                    let itemName = item.name;
-                    let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-                    let limitText = limit !== 0 ? ` (${limit}%)` : "";
-                    content += `<button class="macro-button" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Easy")}: ${itemName}${encroachText}${limitText}</button>`;
-                });
-            }
+                if (isDisabled) {
+                    style = 'style="background-color: black; color: white;"';  // 사용 불가 상태일 경우 검은색 배경, 흰색 글씨
+                }
+
+                let itemName = item.name;
+                let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
+                let limitText = limit !== 0 ? ` (${limit}%)` : "";
+                content += `<button class="macro-button" data-item-id="${item.id}" ${style}>${itemName}${encroachText}${limitText}</button>`;
+            });
 
             return content;
         }
@@ -362,6 +366,13 @@ class DX3HUD extends Application {
                 html.find(".macro-button").click((ev) => {
                     let itemId = ev.currentTarget.dataset.itemId;
                     let item = agent.items.get(itemId);
+
+                    // Disable button click for fully used items
+                    if (ev.currentTarget.style.backgroundColor === "black") {
+                        ev.preventDefault(); // Do nothing if the item is fully used
+                        return;
+                    }
+
                     if (ev.currentTarget.id === "reactivate-button") {
                         callDialog.close();
                         excuteCombosOrEffects(agent, timing, itemType);  // Reopen the dialog
@@ -433,6 +444,12 @@ class DX3HUD extends Application {
                 });
         }
 
+        // Logic to check if the item is fully used (based on usedFull logic)
+        function isItemFullyUsed(used, level) {
+            let max = used.max + (used.level ? level : 0);
+            return (used.disable != 'notCheck' && used.state >= max);
+        }
+
         // Generate dialog content for psionics
         let filteredItems = getFilteredPsionicsItems(agent, timing, currentEP, targets);
 
@@ -440,13 +457,27 @@ class DX3HUD extends Application {
             let content = "";
             filteredItems.forEach((item) => {
                 let limit = Number(item.system.limit);
+                if (isNaN(limit) || item.system.limit === "-") {
+                    limit = 0;
+                }
                 let hp = item.system.hp.value;
-                if (isNaN(limit)) limit = 0;
+
+                let isDisabled = false;
+                let style = "";
+
+                // Apply usedFull logic for effect items
+                if (isItemFullyUsed(item.system.used, item.system.level.value)) {
+                    isDisabled = true;
+                }
+
+                if (isDisabled) {
+                    style = 'style="background-color: black; color: white;"';
+                }
 
                 let itemName = item.name;
                 let hpText = hp ? ` (${game.i18n.localize("DX3rd.HP")}: ${hp})` : "";
                 let limitText = limit !== 0 ? ` (${limit}%)` : "";
-                content += `<button class="macro-button" data-item-id="${item.id}">${itemName}${hpText}${limitText}</button>`;
+                content += `<button class="macro-button" data-item-id="${item.id}" ${style}>${itemName}${hpText}${limitText}</button>`;
             });
             return content;
         }
@@ -469,6 +500,13 @@ class DX3HUD extends Application {
                 html.find(".macro-button").click((ev) => {
                     let itemId = ev.currentTarget.dataset.itemId;
                     let item = agent.items.get(itemId);
+
+                    // Disable button click for fully used items
+                    if (ev.currentTarget.style.backgroundColor === "black") {
+                        ev.preventDefault(); // Do nothing if the item is fully used
+                        return;
+                    }
+
                     if (ev.currentTarget.id === "reactivate-button") {
                         callDialog.close();
                         excutePsionics(agent, timing);  // Reopen the dialog
