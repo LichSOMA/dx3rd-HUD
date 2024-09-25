@@ -39,7 +39,7 @@ class DX3HUD extends Application {
             }
         });
 
-        // run function
+        // run sub-button's function
         html.on("click", ".dx3-sub-button", async (event) => {
             const baseButtonKey = this.currentOpenedButton?.getAttribute('data-key');  // Get the data-key for the base button
             const subButtonKey = event.currentTarget.getAttribute('data-key');  // Get the data-key of a sub-button
@@ -74,7 +74,7 @@ class DX3HUD extends Application {
                 let token = selectedTokens[0];
                 let agent = token.actor;
 
-                await this.excuteComboAndEffect(agent, timing, "combo");
+                await this.excuteCombosOrEffects(agent, timing, "combo");
             }
 
             // Execute effect button's sub-button function
@@ -89,7 +89,7 @@ class DX3HUD extends Application {
                 let token = selectedTokens[0];
                 let agent = token.actor;
 
-                await this.excuteComboAndEffect(agent, timing, "effect");
+                await this.excuteCombosOrEffects(agent, timing, "effect");
             }
 
             // Execute psionics button's sub-button function
@@ -113,19 +113,45 @@ class DX3HUD extends Application {
 
             // Execute item button's sub-button function
             else if (baseButtonKey === "item") {
+                const type = subButtonKey;
+                let selectedTokens = canvas.tokens.controlled;
+                if (selectedTokens.length !== 1) {
+                    ui.notifications.info("select a token");
+                    return;
+                }
+
+                let token = selectedTokens[0];
+                let agent = token.actor;
+
+                await this.executeItems(agent, type);
+            }
+        });
+
+        // Add a event handler for both rois and backtrack buttons
+        html.on("click", ".dx3-button-wrapper[data-key='rois'], .dx3-button-wrapper[data-key='backtrack']", async (event) => {
+            let selectedTokens = canvas.tokens.controlled;
+            if (selectedTokens.length !== 1) {
+                ui.notifications.info("select a token");
+                return;
             }
 
-            // Execute rois button's sub-button function
-            else if (baseButtonKey === "rois") {
-            }
+            let token = selectedTokens[0];
+            let agent = token.actor;
+            const baseButtonKey = event.currentTarget.getAttribute('data-key'); // Get the data-key of the clicked button
 
-            // Execute backtrack button's sub-button function
-            else {
+            if (baseButtonKey === 'rois') {
+                console.log("Executing rois functionality");
+                // Implement rois-related function here
+                // await this.executeRois(agent);
+            } else if (baseButtonKey === 'backtrack') {
+                console.log("Executing backtrack functionality");
+                // Implement backtrack-related function here
+                // await this.executeBacktrack(agent);
             }
         });
     }
 
-    // roll function
+    // execute roll dialog
     async executeRoll(attribute) {
         const selectedTokens = canvas.tokens.controlled;
 
@@ -202,7 +228,7 @@ class DX3HUD extends Application {
     }
 
     // excute combo dialog or effect dialog
-    async excuteComboAndEffect(agent, timing, itemType) {
+    async excuteCombosOrEffects(agent, timing, itemType) {
         let currentEP = Number(agent.system.attributes.encroachment.value);
         let targets = Array.from(game.user.targets || []);
 
@@ -295,7 +321,7 @@ class DX3HUD extends Application {
                     let item = agent.items.get(itemId);
                     if (ev.currentTarget.id === "reactivate-button") {
                         callDialog.close();
-                        excuteComboAndEffect(agent, timing, itemType);  // Reopen the dialog
+                        excuteCombosOrEffects(agent, timing, itemType);  // Reopen the dialog
                     } else {
                         if (item) {
                             item.toMessage();
@@ -415,6 +441,57 @@ class DX3HUD extends Application {
         callDialog.render(true);
     }
 
+    // excute item dialog
+    async executeItems(agent, type) {
+        // Function for filtering items based on item type(weapon, protect, vehicle, connection, book, etc, once)
+        function getFilteredItems(agent) {
+            return agent.items
+                .filter((item) => {
+                    const matchesType = item.data.type === type || 
+                    (["book", "etc", "once"].includes(type) && item.data.type === "item" && item.system.type === type);  // 추가 필터링
+
+                    return matchesType;
+                });
+        }
+
+        // Generate dialog content for items
+        let filteredItems = getFilteredItems(agent);
+
+        function createDialogContent(filteredItems) {
+            let content = "";
+            filteredItems.forEach((item) => {
+                let itemName = item.name;
+                content += `<button class="macro-button" data-item-id="${item.id}">${itemName}</button>`;
+            });
+            return content;
+        }
+
+        let dialogContent = createDialogContent(filteredItems);
+        if (!dialogContent) {
+            let message = targets.length > 0 ? "There are no items items with the selected type and target." : "There are no items items with the selected type.";
+            ui.notifications.info(message);
+            return;
+        }
+
+        let callDialog = new Dialog({
+            title: game.i18n.localize(`DX3rd.${type.charAt(0).toUpperCase() + type.slice(1)}`),
+            content: dialogContent,
+            buttons: {},
+            close: () => { },
+            render: (html) => {
+                html.find(".macro-button").click((ev) => {
+                    let itemId = ev.currentTarget.dataset.itemId;
+                    let item = agent.items.get(itemId);
+                    if (item) {
+                        item.toMessage();
+                        callDialog.close();
+                    }
+                });
+            }
+        });
+        callDialog.render(true);
+    }
+
     getData() {
         return {
             buttons: [
@@ -499,13 +576,12 @@ class DX3HUD extends Application {
                 },
                 {
                     name: `${game.i18n.localize("DX3rd.Rois")}`,
-                    key: "rois",
-                    subButtons: [
-                        { name: `${game.i18n.localize("DX3rd.Rois")}`, key: "rois" },
-                        { name: `${game.i18n.localize("DX3rd.Memory")}`, key: "memory" }
-                    ]
-                },
-                { name: `${game.i18n.localize("DX3rd.BackTrack")}`, key: "backtrack" } // This button has no subbuttons
+                    key: "rois"
+                }, // This button has no subbuttons
+                { 
+                    name: `${game.i18n.localize("DX3rd.BackTrack")}`,
+                    key: "backtrack" 
+                } // This button has no subbuttons
             ]
 
         }
