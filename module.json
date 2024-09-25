@@ -32,13 +32,11 @@
         "scripts/config.js",
         "scripts/main.js"
     ],
-    "esmodules": [
-    ],
+    "esmodules": [],
     "styles": [
         "styles/styles.css"
     ],
-    "packs": [
-    ],
+    "packs": [],
     "languages": [
         {
             "lang": "ko",
@@ -58,5 +56,6 @@
     ],
     "url": "https://github.com/LichSOMA/dx3rd-HUD",
     "manifest": "",
-    "download": ""
+    "download": "https://codeload.github.com/LichSOMA/dx3rd-HUD/zip/main",
+    "license": "LICENSE.txt"
 }

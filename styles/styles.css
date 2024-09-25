@@ -1,3 +1,5 @@
+@import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');
+
 #dx3rd-HUD {
     position: absolute;
     background-color: rgba(0, 0, 0, 0);
@@ -9,6 +11,7 @@
     align-items: center;
     width: 200px;
     height: auto;
+    font-family: 'Nanum Gothic', sans-serif;
 }
 
 .dx3-button-wrapper {
@@ -17,7 +20,7 @@
 }
 
 .dx3-button {
-    width: 80px;
+    width: 100px;
     height: 30px;
     background-color: #1A1A1A;
     border: none;
@@ -30,6 +33,7 @@
     margin: 4px 0px;
     cursor: pointer;
     border-radius: 5px;
+    font-family: 'Nanum Gothic', sans-serif;
 }
 
 .dx3-button:hover {
@@ -38,14 +42,14 @@
 
 .sub-buttons {
     position: absolute;
-    left: 85px;
+    left: 105px;
     top: 4px;
     display: none;
     flex-direction: row;
 }
 
 .dx3-sub-button {
-    width: 80px;
+    width: 100px;
     height: 30px;
     background-color: #333;
     border: none;
@@ -53,11 +57,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: bold;
     margin-left: 5px;
     cursor: pointer;
     border-radius: 5px;
+    font-family: 'Nanum Gothic', sans-serif;
 }
 
 .dx3-sub-button:hover {
