@@ -370,7 +370,7 @@ class DX3HUD extends Application {
                 }
 
                 if (isDisabled) {
-                    style = 'style="background-color: black; color: white;"';  // 사용 불가 상태일 경우 검은색 배경, 흰색 글씨
+                    style = 'style="background-color: black; color: white;"';
                 }
 
                 let itemName = item.name;
@@ -791,7 +791,7 @@ class DX3HUD extends Application {
             return agent.items
                 .filter((item) => {
                     const matchesType = item.data.type === type ||
-                        (["book", "etc", "once"].includes(type) && item.data.type === "item" && item.system.type === type);  // 추가 필터링
+                        (["book", "etc", "once"].includes(type) && item.data.type === "item" && item.system.type === type);
 
                     return matchesType;
                 });
