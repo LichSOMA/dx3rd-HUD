@@ -127,7 +127,7 @@ class DX3HUD extends Application {
             }
         });
 
-        // Add a event handler for both rois and backtrack buttons
+        // Add a single event handler for both rois and backtrack buttons
         html.on("click", ".dx3-button-wrapper[data-key='rois'], .dx3-button-wrapper[data-key='backtrack']", async (event) => {
             let selectedTokens = canvas.tokens.controlled;
             if (selectedTokens.length !== 1) {
@@ -141,17 +141,17 @@ class DX3HUD extends Application {
 
             if (baseButtonKey === 'rois') {
                 console.log("Executing rois functionality");
-                // Implement rois-related function here
+                // Implement rois-related functionality here
                 // await this.executeRois(agent);
             } else if (baseButtonKey === 'backtrack') {
                 console.log("Executing backtrack functionality");
-                // Implement backtrack-related function here
+                // Implement backtrack-related functionality here
                 // await this.executeBacktrack(agent);
             }
         });
     }
 
-    // execute roll dialog
+    // roll function
     async executeRoll(attribute) {
         const selectedTokens = canvas.tokens.controlled;
 
@@ -260,7 +260,7 @@ class DX3HUD extends Application {
                         limit = 0;
                     }
                     const matchesTiming = item.system.timing === timing || item.system.timing === "major-reaction" && (timing === "major" || timing === "reaction");
-                    const matchesType = itemType === "combo" ? item.data.type === "combo" : (item.data.type === "effect" || item.data.type === "easy");
+                    const matchesType = itemType === "combo" ? item.data.type === "combo" : item.data.type === "effect";
 
                     if (targets.length > 0) {
                         return matchesTiming && matchesType && limit <= currentEP && item.system.getTarget;
@@ -288,16 +288,50 @@ class DX3HUD extends Application {
 
         function createDialogContent(filteredItems) {
             let content = "";
-            filteredItems.forEach((item) => {
-                let limit = Number(item.system.limit);
-                let encroach = item.system.encroach.value;
-                if (isNaN(limit)) limit = 0;
+            if ( itemType === "combo" ) {
+                filteredItems.forEach((item) => {
+                    let limit = Number(item.system.limit);
+                    let encroach = item.system.encroach.value;
+                    if (isNaN(limit)) limit = 0;
+    
+                    let itemName = item.name;
+                    let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
+                    let limitText = limit !== 0 ? ` (${limit}%)` : "";
+                    content += `<button class="macro-button" data-item-id="${item.id}">${itemName}${encroachText}${limitText}</button>`;
+                });
+            } else {
+                let normalItems = filteredItems.filter(item => item.system.type === "normal");
+                let easyItems = filteredItems.filter(item => item.system.type === "easy");
 
-                let itemName = item.name;
-                let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
-                let limitText = limit !== 0 ? ` (${limit}%)` : "";
-                content += `<button class="macro-button" data-item-id="${item.id}">${itemName}${encroachText}${limitText}</button>`;
-            });
+                normalItems.forEach((item) => {
+                    let limit = Number(item.system.limit);
+                    let encroach = item.system.encroach.value;
+                    if (isNaN(limit)) limit = 0;
+        
+                    let itemName = item.name;
+                    let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
+                    let limitText = limit !== 0 ? ` (${limit}%)` : "";
+                    content += `<button class="macro-button" data-item-id="${item.id}">${itemName}${encroachText}${limitText}</button>`;
+                });
+        
+                // Separator if there are easy items
+                if (normalItems.length > 0 && easyItems.length > 0) {
+                    content += `<hr>`;
+                }
+        
+                // Easy items
+                easyItems.forEach((item) => {
+                    let limit = Number(item.system.limit);
+                    let encroach = item.system.encroach.value;
+                    if (isNaN(limit)) limit = 0;
+        
+                    let itemName = item.name;
+                    let encroachText = encroach ? ` (${game.i18n.localize("DX3rd.Encroach")}: ${encroach})` : "";
+                    let limitText = limit !== 0 ? ` (${limit}%)` : "";
+                    content += `<button class="macro-button" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Easy")}: ${itemName}${encroachText}${limitText}</button>`;
+                });
+            }
+
             return content;
         }
 
