@@ -481,8 +481,8 @@ class DX3HUD extends Application {
         function getFilteredItems(agent) {
             return agent.items
                 .filter((item) => {
-                    const matchesType = item.data.type === type || 
-                    (["book", "etc", "once"].includes(type) && item.data.type === "item" && item.system.type === type);  // 추가 필터링
+                    const matchesType = item.data.type === type ||
+                        (["book", "etc", "once"].includes(type) && item.data.type === "item" && item.system.type === type);  // 추가 필터링
 
                     return matchesType;
                 });
@@ -533,7 +533,6 @@ class DX3HUD extends Application {
             return agent.items
                 .filter((item) => {
                     const matchesType = item.data.type === "rois";
-
                     return matchesType;
                 });
         }
@@ -548,47 +547,64 @@ class DX3HUD extends Application {
             let justItems = filteredItems.filter(item => item.system.type === "-");
             let memoryItems = filteredItems.filter(item => item.system.type === "M");
 
+            function generateButton(item, label) {
+                // Check for titus and sublimation
+                if (item.system.sublimation) {
+                    return ""; // Don't display the button if sublimation exists
+                }
+                let style = "";
+                if (item.system.titus) {
+                    style = 'style="background-color: black; color: white;"'; // Black button with white text if titus exists
+                }
+
+                let itemName = item.name;
+                return `<button class="macro-button" data-item-id="${item.id}" ${style}>${label}: ${itemName}</button>`;
+            }
+
+            // Descripted items
             descriptedItems.forEach((item) => {
-                let itemName = item.name;
-                content += `<button class="macro-button" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Descripted")}: ${itemName}</button>`;
+                content += generateButton(item, game.i18n.localize("DX3rd.Descripted"));
             });
 
             // Separator
-            if (descriptedItems.length > 0) {
+            let activeDescriptedItems = descriptedItems.filter(item => !item.system.sublimation);
+            if (activeDescriptedItems.length > 0) {
                 content += `<hr>`;
             }
 
+            // Superier items
             superierItems.forEach((item) => {
-                let itemName = item.name;
-                content += `<button class="macro-button" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Superier")}: ${itemName}</button>`;
+                content += generateButton(item, game.i18n.localize("DX3rd.Superier"));
             });
 
             // Separator
-            if (superierItems.length > 0) {
+            let activeSuperierItems = superierItems.filter(item => !item.system.sublimation);
+            if (activeSuperierItems.length > 0) {
                 content += `<hr>`;
             }
 
+            // Just items
             justItems.forEach((item) => {
-                let itemName = item.name;
-                content += `<button class="macro-button" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Rois")}: ${itemName}</button>`;
+                content += generateButton(item, game.i18n.localize("DX3rd.Rois"));
             });
 
             // Separator
-            if (justItems.length > 0 && memoryItems.length > 0) {
+            let activeJustItems = justItems.filter(item => !item.system.sublimation);
+            if (activeJustItems.length > 0 && memoryItems.length > 0) {
                 content += `<hr>`;
             }
 
-            // Easy items
+            // Memory items
             memoryItems.forEach((item) => {
-                let itemName = item.name;
-                content += `<button class="macro-button" data-item-id="${item.id}">${game.i18n.localize("DX3rd.Memory")}: ${itemName}</button>`;
+                content += generateButton(item, game.i18n.localize("DX3rd.Memory"));
             });
+
             return content;
         }
 
         let dialogContent = createDialogContent(filteredItems);
-        if (!dialogContent) {
-            let message = "There are no items items with the selected type.";
+        if (!dialogContent.trim()) {
+            let message = "There are no items with the selected type.";
             ui.notifications.info(message);
             return;
         }
@@ -611,6 +627,7 @@ class DX3HUD extends Application {
         });
         callDialog.render(true);
     }
+
 
     getData() {
         return {
