@@ -411,7 +411,7 @@ class DX3HUD extends Application {
 
                     if (ev.currentTarget.id === "reactivate-button") {
                         callDialog.close();
-                        excuteCombosOrEffects(agent, timing, itemType);  // Reopen the dialog
+                        this.excuteCombosOrEffects(agent, timing, itemType);  // Reopen the dialog
                     } else {
                         if (item) {
                             item.toMessage();
@@ -545,7 +545,7 @@ class DX3HUD extends Application {
 
                     if (ev.currentTarget.id === "reactivate-button") {
                         callDialog.close();
-                        excutePsionics(agent, timing);  // Reopen the dialog
+                        this.excutePsionics(agent, timing);  // Reopen the dialog
                     } else {
                         if (item) {
                             item.toMessage();
