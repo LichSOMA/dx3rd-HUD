@@ -24,7 +24,7 @@ class DX3HUD extends Application {
             const baseButtonKey = $(element).attr('data-key');
             
             // Exception handling: do not hide roll, rois, and backtrack buttons
-            if (baseButtonKey === "roll" || baseButtonKey === "rois" || baseButtonKey === "backtrack") {
+            if (baseButtonKey === "roll" || baseButtonKey === "condition" || baseButtonKey === "rois" || baseButtonKey === "backtrack") {
                 $(element).show();
                 return;
             }
@@ -181,6 +181,21 @@ class DX3HUD extends Application {
 
                 await this.excuteItems(agent, type);
             }
+
+            // Execute condition button's sub-button function
+            else if (baseButtonKey === "condition") {
+                const condition = subButtonKey;
+                let selectedTokens = canvas.tokens.controlled;
+                if (selectedTokens.length !== 1) {
+                    ui.notifications.info("select a token");
+                    return;
+                }
+
+                let token = selectedTokens[0];
+                let agent = token.actor;
+
+                await this.excuteConditions(agent, condition);
+            }
         });
 
         // Add a single event handler for both rois and backtrack buttons
@@ -302,7 +317,7 @@ class DX3HUD extends Application {
                     if (isNaN(limit)) limit = 0;
 
                     const matchesTiming = item.system.timing === timing || item.system.timing === "major-reaction" && (timing === "major" || timing === "reaction");
-                    const matchesType = itemType === "combo" ? item.data.type === "combo" : item.data.type === "effect";
+                    const matchesType = itemType === "combo" ? item.type === "combo" : item.type === "effect";
 
                     if (targets.length > 0) {
                         return matchesTiming && matchesType && limit <= currentEP && item.system.getTarget;
@@ -360,12 +375,12 @@ class DX3HUD extends Application {
                 let style = "";
 
                 // Apply usedFull logic for effect items
-                if (item.data.type === "effect" && isItemFullyUsed(item.system.used, item.system.level.value)) {
+                if (item.type === "effect" && isItemFullyUsed(item.system.used, item.system.level.value)) {
                     isDisabled = true;
                 }
 
                 // Apply usedFullForCombo logic for combo items
-                if (item.data.type === "combo" && isComboFullyUsed(agent, item)) {
+                if (item.type === "combo" && isComboFullyUsed(agent, item)) {
                     isDisabled = true;
                 }
 
@@ -455,7 +470,7 @@ class DX3HUD extends Application {
                         limit = 0;
                     }
                     const matchesTiming = item.system.timing === timing || item.system.timing === "major-reaction" && (timing === "major" || timing === "reaction");
-                    const isPsionics = item.data.type === "psionic";
+                    const isPsionics = item.type === "psionic";
 
                     if (targets.length > 0) {
                         return matchesTiming && isPsionics && limit <= currentEP && item.system.getTarget;
@@ -585,7 +600,7 @@ class DX3HUD extends Application {
                         || item.system.spelltype === "RitualCurse" && type === "Ritual"
                         || item.system.spelltype === "SummonRitual" && (type === "Summon" || type === "Ritual")
                         || item.system.spelltype === "EvocationRitual" && (type === "Evocation" || type === "Ritual");
-                    const isSpell = item.data.type === "spell";
+                    const isSpell = item.type === "spell";
                     if (targets.length > 0) {
                         return matchesType && isSpell && item.system.getTarget;
                     } else {
@@ -790,8 +805,8 @@ class DX3HUD extends Application {
         function getFilteredItems(agent) {
             return agent.items
                 .filter((item) => {
-                    const matchesType = item.data.type === type ||
-                        (["book", "etc", "once"].includes(type) && item.data.type === "item" && item.system.type === type);
+                    const matchesType = item.type === type ||
+                        (["book", "etc", "once"].includes(type) && item.type === "item" && item.system.type === type);
 
                     return matchesType;
                 });
@@ -835,13 +850,63 @@ class DX3HUD extends Application {
         callDialog.render(true);
     }
 
+    // excute condition
+    async excuteConditions(agent, condition) {
+        const label = `${game.i18n.localize(`DX3rd.${condition.charAt(0).toUpperCase() + condition.slice(1)}`)}`;
+
+        const effect = agent.effects.find(e => e.data.label === label);
+        
+        let icon;
+        if (condition === "riger") {
+            icon = "icons/svg/lightning.svg";
+        } else if (condition === "pressure") {
+            icon = "icons/svg/net.svg";
+        } else if (condition === "dazed") {
+            icon = "icons/svg/daze.svg";
+        } else if (condition === "tainted") {
+            icon = "icons/svg/acid.svg";
+        } else if (condition === "hatred") {
+            icon = "icons/svg/fire.svg";
+        } else if (condition === "fear") {
+            icon = "icons/svg/stoned.svg";
+        } else if (condition === "berserk") {
+            icon = "icons/svg/pawprint.svg";
+        } else if (condition === "fly") {
+            icon = "icons/svg/wing.svg";
+        } else if (condition === "stealth") {
+            icon = "icons/svg/blind.svg";
+        } else if (condition === "boarding") {
+            icon = "icons/svg/target.svg";
+        }
+
+        if (effect) {
+          // 'berserk' 상태가 이미 있을 경우 제거
+          await effect.delete();
+          console.log(`Removed berserk from token: ${agent.name}`);
+        } else {
+          // 'berserk' 상태가 없을 경우 추가
+          const effectData = {
+            id: `${condition}`,
+            label: label,
+            icon: icon, // 아이콘 경로
+            disabled: false,
+            duration: { rounds: 9999 }, // 지속 시간 설정 (라운드 단위)
+            flags: { "dx3rd": { statusId: `${condition}` } }
+          };
+        
+          // 새로운 상태이상 적용
+          await agent.createEmbeddedDocuments("ActiveEffect", [effectData]);
+          console.log(`Applied berserk to token: ${token.name}`);
+        }              
+    }
+
     // excute rois dialog
     async excuteRois(agent) {
         // Function for filtering items based on item type(rois, memory)
         function getFilteredItems(agent) {
             return agent.items
                 .filter((item) => {
-                    const matchesType = item.data.type === "rois";
+                    const matchesType = item.type === "rois";
                     return matchesType;
                 });
         }
@@ -1060,6 +1125,22 @@ class DX3HUD extends Application {
                     ]
                 },
                 {
+                    name: `${game.i18n.localize("DX3HUD.Condition")}`,
+                    key: "condition",
+                    subButtons: [
+                        { name: `${game.i18n.localize("DX3rd.Riger")}`, key: "riger" },
+                        { name: `${game.i18n.localize("DX3rd.Dazed")}`, key: "dazed" },
+                        { name: `${game.i18n.localize("DX3rd.Pressure")}`, key: "pressure" },
+                        { name: `${game.i18n.localize("DX3rd.Tainted")}`, key: "tainted" },
+                        { name: `${game.i18n.localize("DX3rd.Hatred")}`, key: "hatred" },
+                        { name: `${game.i18n.localize("DX3rd.Fear")}`, key: "fear" },
+                        { name: `${game.i18n.localize("DX3rd.Berserk")}`, key: "berserk" },
+                        { name: `${game.i18n.localize("DX3rd.Fly")}`, key: "fly" },
+                        { name: `${game.i18n.localize("DX3rd.Stealth")}`, key: "stealth" },
+                        { name: `${game.i18n.localize("DX3rd.Boarding")}`, key: "boarding" }
+                    ]
+                },
+                {
                     name: `${game.i18n.localize("DX3rd.Rois")}`,
                     key: "rois"
                 }, // This button has no subbuttons
@@ -1082,7 +1163,7 @@ class DX3HUD extends Application {
 
         if (baseButtonKey === "combo" || baseButtonKey === "effect" || baseButtonKey === "psionic") {
             const timing = subButtonKey;
-            let items = agent.items.filter(item => item.system.timing === timing && item.data.type === baseButtonKey);
+            let items = agent.items.filter(item => item.system.timing === timing && item.type === baseButtonKey);
             return items;
         }
 
@@ -1093,14 +1174,14 @@ class DX3HUD extends Application {
                 || item.system.spelltype === "RitualKeep" && spelltype === "Ritual"
                 || item.system.spelltype === "RitualCurse" && spelltype === "Ritual"
                 || item.system.spelltype === "SummonRitual" && (spelltype === "Summon" || spelltype === "Ritual")
-                || item.system.spelltype === "EvocationRitual" && (spelltype === "Evocation" || spelltype === "Ritual") && item.data.type === baseButtonKey);
+                || item.system.spelltype === "EvocationRitual" && (spelltype === "Evocation" || spelltype === "Ritual") && item.type === baseButtonKey);
             return items;
         }
 
         if (baseButtonKey === "item") {
             const type = subButtonKey;
-            let items = agent.items.filter(item => item.data.type === type ||
-                (["book", "etc", "once"].includes(type) && item.data.type === "item" && item.system.type === type));
+            let items = agent.items.filter(item => item.type === type ||
+                (["book", "etc", "once"].includes(type) && item.type === "item" && item.system.type === type));
             return items;
         }
 
