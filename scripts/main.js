@@ -119,7 +119,7 @@ class DX3HUD extends Application {
                 let token = selectedTokens[0];
                 let agent = token.actor;
 
-                await this.excuteCombosOrEffects(agent, timing, "combo");
+                await this.executeCombosOrEffects(agent, timing, "combo");
             }
 
             // Execute effect button's sub-button function
@@ -134,7 +134,7 @@ class DX3HUD extends Application {
                 let token = selectedTokens[0];
                 let agent = token.actor;
 
-                await this.excuteCombosOrEffects(agent, timing, "effect");
+                await this.executeCombosOrEffects(agent, timing, "effect");
             }
 
             // Execute psionics button's sub-button function
@@ -149,7 +149,7 @@ class DX3HUD extends Application {
                 let token = selectedTokens[0];
                 let agent = token.actor;
 
-                await this.excutePsionics(agent, timing);
+                await this.executePsionics(agent, timing);
             }
 
             // Execute spell button's sub-button function
@@ -164,7 +164,7 @@ class DX3HUD extends Application {
                 let token = selectedTokens[0];
                 let agent = token.actor;
 
-                await this.excuteSpells(agent, type);
+                await this.executeSpells(agent, type);
             }
 
             // Execute item button's sub-button function
@@ -179,7 +179,7 @@ class DX3HUD extends Application {
                 let token = selectedTokens[0];
                 let agent = token.actor;
 
-                await this.excuteItems(agent, type);
+                await this.executeItems(agent, type);
             }
 
             // Execute condition button's sub-button function
@@ -194,7 +194,7 @@ class DX3HUD extends Application {
                 let token = selectedTokens[0];
                 let agent = token.actor;
 
-                await this.excuteConditions(token, agent, condition);
+                await this.executeConditions(token, agent, condition);
             }
         });
 
@@ -212,10 +212,10 @@ class DX3HUD extends Application {
 
             if (baseButtonKey === 'rois') {
                 console.log("Executing rois function");
-                await this.excuteRois(agent);
+                await this.executeRois(agent);
             } else if (baseButtonKey === 'backtrack') {
                 console.log("Executing backtrack function");
-                await this.excuteBackTrack(agent);
+                await this.executeBackTrack(agent);
             }
         });
     }
@@ -285,8 +285,8 @@ class DX3HUD extends Application {
         }).render(true);
     }
 
-    // excute combo dialog or effect dialog
-    async excuteCombosOrEffects(agent, timing, itemType) {
+    // execute combo dialog or effect dialog
+    async executeCombosOrEffects(agent, timing, itemType) {
 
         // 상태이상: 중압에 의한 오토액션 불가 //
         if (agent.system.conditions.pressure?.active && timing === "auto") {
@@ -443,7 +443,7 @@ class DX3HUD extends Application {
 
                     if (ev.currentTarget.id === "reactivate-button") {
                         callDialog.close();
-                        this.excuteCombosOrEffects(agent, timing, itemType);  // Reopen the dialog
+                        this.executeCombosOrEffects(agent, timing, itemType);  // Reopen the dialog
                     } else {
                         if (item) {
                             item.toMessage();
@@ -456,8 +456,8 @@ class DX3HUD extends Application {
         callDialog.render(true);
     }
 
-    // excute psionic dialog
-    async excutePsionics(agent, timing) {
+    // execute psionic dialog
+    async executePsionics(agent, timing) {
 
         // 상태이상: 중압에 의한 오토액션 불가 //
         if (agent.system.conditions.pressure?.active && timing === "auto") {
@@ -596,7 +596,7 @@ class DX3HUD extends Application {
 
                     if (ev.currentTarget.id === "reactivate-button") {
                         callDialog.close();
-                        this.excutePsionics(agent, timing);  // Reopen the dialog
+                        this.executePsionics(agent, timing);  // Reopen the dialog
                     } else {
                         if (item) {
                             item.toMessage();
@@ -609,8 +609,8 @@ class DX3HUD extends Application {
         callDialog.render(true);
     }
 
-    // excute spell dialog
-    async excuteSpells(agent, type) {
+    // execute spell dialog
+    async executeSpells(agent, type) {
         let targets = Array.from(game.user.targets || []);
 
         function parseDiceValue(value) {
@@ -837,8 +837,8 @@ class DX3HUD extends Application {
         spellDialog.render(true);
     }
 
-    // excute item dialog
-    async excuteItems(agent, type) {
+    // execute item dialog
+    async executeItems(agent, type) {
         // Function for filtering items based on item type(weapon, protect, vehicle, connection, book, etc, once)
         function getFilteredItems(agent) {
             return agent.items
@@ -888,8 +888,8 @@ class DX3HUD extends Application {
         callDialog.render(true);
     }
 
-    // excute condition
-    async excuteConditions(token, agent, condition) {
+    // execute condition
+    async executeConditions(token, agent, condition) {
 
         const appliedEffect = agent.effects.find(e => e.data.flags?.dx3rd?.statusId === condition);
 
@@ -903,8 +903,8 @@ class DX3HUD extends Application {
         }
     }
 
-    // excute rois dialog
-    async excuteRois(agent) {
+    // execute rois dialog
+    async executeRois(agent) {
         // Function for filtering items based on item type(rois, memory)
         function getFilteredItems(agent) {
             return agent.items
@@ -1007,8 +1007,8 @@ class DX3HUD extends Application {
         callDialog.render(true);
     }
 
-    // excute backtrack dialog
-    async excuteBackTrack(agent) {
+    // execute backtrack dialog
+    async executeBackTrack(agent) {
 
         // Generating Dialog HTML
         let content = `
