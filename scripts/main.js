@@ -418,7 +418,7 @@ class DX3HUD extends Application {
 
         let dialogContent = createDialogContent(filteredItems);
         if (!dialogContent) {
-            let message = targets.length > 0 ? "There are no items with the selected timing and target." : "There are no items with the selected timing.";
+            let message = targets.length > 0 ? "There are no items with the selected timing and target(Check targets)." : "There are no items with the selected timing(Check targets).";
             ui.notifications.info(message);
             return;
         }
@@ -571,7 +571,7 @@ class DX3HUD extends Application {
 
         let dialogContent = createDialogContent(filteredItems);
         if (!dialogContent) {
-            let message = targets.length > 0 ? "There are no psionics items with the selected timing and target." : "There are no psionics items with the selected timing.";
+            let message = targets.length > 0 ? "There are no psionics items with the selected timing and target.(Check target)" : "There are no psionics items with the selected timing.(Check target)";
             ui.notifications.info(message);
             return;
         }
