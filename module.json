@@ -1,61 +1,60 @@
 {
-    "id": "dx3rd-HUD",
-    "title": "Double Cross 3rd HUD",
-    "description": "A utility module for Double Cross system that implements functions such as running rolls, calling items, etc without opening a character sheet.",
-    "version": "1.0.0",
-    "compatibility": {
-        "minimum": 11,
-        "verified": "11.315"
-    },
-    "authors": [
-        {
-            "name": "LichSOMA",
-            "email": "bluedaypoprpg@gmail.com",
-            "discord": "bluedaypop"
-        }
-    ],
-    "relationships": {
-        "systems": [
-            {
-                "id": "dx3rd",
-                "type": "system",
-                "compatibility": [
-                    {
-                        "minimum": "1.5.0",
-                        "verified": "1.5.0"
-                    }
-                ]
-            }
+  "id": "dx3rd-HUD",
+  "title": "Double Cross 3rd HUD",
+  "description": "A utility module for Double Cross system that implements functions such as running rolls, calling items, etc without opening a character sheet.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "11",
+    "verified": "11.315"
+  },
+  "authors": [
+    {
+      "name": "LichSOMA",
+      "email": "bluedaypoprpg@gmail.com",
+      "discord": "bluedaypop",
+      "flags": {}
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "dx3rd",
+        "type": "system",
+        "compatibility": [
+          null
         ]
+      }
+    ]
+  },
+  "scripts": [
+    "scripts/config.js",
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/styles.css"
+  ],
+  "languages": [
+    {
+      "lang": "ko",
+      "name": "Korean",
+      "path": "lang/ko.json",
+      "flags": {}
     },
-    "scripts": [
-        "scripts/config.js",
-        "scripts/main.js"
-    ],
-    "esmodules": [],
-    "styles": [
-        "styles/styles.css"
-    ],
-    "packs": [],
-    "languages": [
-        {
-            "lang": "ko",
-            "name": "Korean",
-            "path": "lang/ko.json"
-        },
-        {
-            "lang": "ja",
-            "name": "日本語",
-            "path": "lang/ja.json"
-        },
-        {
-            "lang": "en",
-            "name": "English",
-            "path": "lang/en.json"
-        }
-    ],
-    "url": "https://github.com/LichSOMA/dx3rd-HUD",
-    "manifest": "https://raw.githubusercontent.com/LichSOMA/dx3rd-HUD/main/module.json",
-    "download": "https://codeload.github.com/LichSOMA/dx3rd-HUD/zip/main",
-    "license": "LICENSE.txt"
+    {
+      "lang": "ja",
+      "name": "日本語",
+      "path": "lang/ja.json",
+      "flags": {}
+    },
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json",
+      "flags": {}
+    }
+  ],
+  "url": "https://github.com/LichSOMA/dx3rd-HUD",
+  "manifest": "https://github.com/LichSOMA/dx3rd-HUD/blob/main/module.json",
+  "download": "https://codeload.github.com/LichSOMA/dx3rd-HUD/zip/main",
+  "license": "LICENSE.txt"
 }

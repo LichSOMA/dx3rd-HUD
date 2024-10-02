@@ -22,23 +22,23 @@ class DX3HUD extends Application {
         // Checks each base button, hiding the sub buttons if they are empty, and hiding the base button as well if all sub buttons are empty.
         html.find('.dx3-button-wrapper').each((index, element) => {
             const baseButtonKey = $(element).attr('data-key');
-            
+
             // Exception handling: do not hide roll, rois, and backtrack buttons
             if (baseButtonKey === "roll" || baseButtonKey === "condition" || baseButtonKey === "rois" || baseButtonKey === "backtrack") {
                 $(element).show();
                 return;
             }
-        
+
             const subButtons = $(element).find('.sub-buttons .dx3-sub-button');
-        
+
             let hasVisibleSubButtons = false;
-        
+
             subButtons.each((subIndex, subElement) => {
                 const subButtonKey = $(subElement).attr('data-key');
-        
+
                 // Check the sub-button has a corresponding item
                 const itemsForSubButton = this.getItemsForSubButton(baseButtonKey, subButtonKey);
-        
+
                 if (itemsForSubButton.length > 0) {
                     $(subElement).show();
                     hasVisibleSubButtons = true;
@@ -46,7 +46,7 @@ class DX3HUD extends Application {
                     $(subElement).hide();
                 }
             });
-        
+
             // If all sub buttons are hidden, the base button is also hidden
             if (!hasVisibleSubButtons) {
                 $(element).hide();
@@ -194,7 +194,7 @@ class DX3HUD extends Application {
                 let token = selectedTokens[0];
                 let agent = token.actor;
 
-                await this.excuteConditions(agent, condition);
+                await this.excuteConditions(token, agent, condition);
             }
         });
 
@@ -287,6 +287,25 @@ class DX3HUD extends Application {
 
     // excute combo dialog or effect dialog
     async excuteCombosOrEffects(agent, timing, itemType) {
+
+        // 상태이상: 중압에 의한 오토액션 불가 //
+        if (agent.system.conditions.pressure?.active && timing === "auto") {
+            ui.notifications.info(`You cannot use auto action while in pressure.`);
+            return;
+        }
+
+        let berserkActive = agent.system.conditions.berserk?.active;
+        let berserkType = agent.system.conditions.berserk?.type;
+
+        // 상태이상: 폭주에 의한 리액션 불가 //
+        let isUnableReaction = berserkActive &&
+            ["normal", "slaughter", "battlelust", "delusion", "hatred"].includes(berserkType);
+
+        if (isUnableReaction && timing === "reaction") {
+            ui.notifications.info(`You cannot use reaction while in berserk.`);
+            return;  // 조건이 만족되면 기능 실행 중단
+        }
+
         let currentEP = Number(agent.system.attributes.encroachment.value);
         let targets = Array.from(game.user.targets || []);
 
@@ -439,6 +458,25 @@ class DX3HUD extends Application {
 
     // excute psionic dialog
     async excutePsionics(agent, timing) {
+
+        // 상태이상: 중압에 의한 오토액션 불가 //
+        if (agent.system.conditions.pressure?.active && timing === "auto") {
+            ui.notifications.info(`You cannot use auto action while in pressure.`);
+            return;
+        }
+
+        let berserkActive = agent.system.conditions.berserk?.active;
+        let berserkType = agent.system.conditions.berserk?.type;
+
+        // 상태이상: 폭주에 의한 리액션 불가 //
+        let isUnableReaction = berserkActive &&
+            ["normal", "slaughter", "battlelust", "delusion", "hatred"].includes(berserkType);
+
+        if (isUnableReaction && timing === "reaction") {
+            ui.notifications.info(`You cannot use reaction while in berserk.`);
+            return;  // 조건이 만족되면 기능 실행 중단
+        }
+
         let currentEP = Number(agent.system.attributes.encroachment.value);
         let targets = Array.from(game.user.targets || []);
 
@@ -851,53 +889,18 @@ class DX3HUD extends Application {
     }
 
     // excute condition
-    async excuteConditions(agent, condition) {
-        const label = `${game.i18n.localize(`DX3rd.${condition.charAt(0).toUpperCase() + condition.slice(1)}`)}`;
+    async excuteConditions(token, agent, condition) {
 
-        const effect = agent.effects.find(e => e.data.label === label);
-        
-        let icon;
-        if (condition === "riger") {
-            icon = "icons/svg/lightning.svg";
-        } else if (condition === "pressure") {
-            icon = "icons/svg/net.svg";
-        } else if (condition === "dazed") {
-            icon = "icons/svg/daze.svg";
-        } else if (condition === "tainted") {
-            icon = "icons/svg/acid.svg";
-        } else if (condition === "hatred") {
-            icon = "icons/svg/fire.svg";
-        } else if (condition === "fear") {
-            icon = "icons/svg/stoned.svg";
-        } else if (condition === "berserk") {
-            icon = "icons/svg/pawprint.svg";
-        } else if (condition === "fly") {
-            icon = "icons/svg/wing.svg";
-        } else if (condition === "stealth") {
-            icon = "icons/svg/blind.svg";
-        } else if (condition === "boarding") {
-            icon = "icons/svg/target.svg";
-        }
+        const appliedEffect = agent.effects.find(e => e.data.flags?.dx3rd?.statusId === condition);
 
-        if (effect) {
-          // 'berserk' 상태가 이미 있을 경우 제거
-          await effect.delete();
-          console.log(`Removed berserk from token: ${agent.name}`);
+        if (appliedEffect) {
+            await appliedEffect.delete();
         } else {
-          // 'berserk' 상태가 없을 경우 추가
-          const effectData = {
-            id: `${condition}`,
-            label: label,
-            icon: icon, // 아이콘 경로
-            disabled: false,
-            duration: { rounds: 9999 }, // 지속 시간 설정 (라운드 단위)
-            flags: { "dx3rd": { statusId: `${condition}` } }
-          };
-        
-          // 새로운 상태이상 적용
-          await agent.createEmbeddedDocuments("ActiveEffect", [effectData]);
-          console.log(`Applied berserk to token: ${token.name}`);
-        }              
+            const applyEffect = CONFIG.statusEffects.find(e => e.id === `${condition}`);
+            if (applyEffect) {
+                await token.toggleEffect(applyEffect);
+            }
+        }
     }
 
     // excute rois dialog
