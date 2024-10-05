@@ -438,6 +438,7 @@ class DX3HUD extends Application {
                     // Disable button click for fully used items
                     if (ev.currentTarget.style.backgroundColor === "black") {
                         ev.preventDefault(); // Do nothing if the item is fully used
+                        ui.notifications.info(`this item is fully used`)
                         return;
                     }
 
@@ -591,6 +592,7 @@ class DX3HUD extends Application {
                     // Disable button click for fully used items
                     if (ev.currentTarget.style.backgroundColor === "black") {
                         ev.preventDefault(); // Do nothing if the item is fully used
+                        ui.notifications.info(`this item is fully used`)
                         return;
                     }
 
@@ -850,14 +852,32 @@ class DX3HUD extends Application {
                 });
         }
 
+        // Logic to check if the item is fully used (based on usedFull logic)
+        function isItemFullyUsed(used, quantity) {
+            let max = used.max + (used.level ? quantity : 0);
+            return (used.disable != 'notCheck' && used.state >= max);
+        }
+
         // Generate dialog content for items
         let filteredItems = getFilteredItems(agent);
 
         function createDialogContent(filteredItems) {
             let content = "";
             filteredItems.forEach((item) => {
+                let isDisabled = false;
+                let style = "";
+
+                // Apply usedFull logic for effect items
+                if (isItemFullyUsed(item.system.used, item.system.quantity)) {
+                    isDisabled = true;
+                }
+  
+                if (isDisabled) {
+                    style = 'style="background-color: black; color: white;"';
+                }
+
                 let itemName = item.name;
-                content += `<button class="macro-button" data-item-id="${item.id}">${itemName}</button>`;
+                content += `<button class="macro-button" data-item-id="${item.id}" ${style}>${itemName}</button>`;
             });
             return content;
         }
@@ -878,6 +898,14 @@ class DX3HUD extends Application {
                 html.find(".macro-button").click((ev) => {
                     let itemId = ev.currentTarget.dataset.itemId;
                     let item = agent.items.get(itemId);
+
+                    // Disable button click for fully used items
+                    if (ev.currentTarget.style.backgroundColor === "black") {
+                        ev.preventDefault(); // Do nothing if the item is fully used
+                        ui.notifications.info(`this item is fully used`)
+                        return;
+                    }
+
                     if (item) {
                         item.toMessage();
                         callDialog.close();
